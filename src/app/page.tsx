@@ -170,7 +170,7 @@ export default function Home() {
 
   return (
     <PhoneFrame>
-      <div className="h-full flex flex-col relative text-white">
+      <div className="h-full min-h-[100dvh] md:min-h-0 flex flex-col relative text-white">
 
         {/* === Background Gradients === */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -216,7 +216,7 @@ export default function Home() {
                   transition={{ delay: 0.5 }}
                   className="py-2 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/10 inline-block max-w-[90vw]"
                 >
-                  <p className="text-violet-200 text-xs md:text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis px-1">
+                  <p className="text-violet-200 text-xs sm:text-sm font-medium text-center leading-snug px-1">
                     {getWeatherRecommendation(weather.temp, weather.condition)}
                   </p>
                 </motion.div>
@@ -250,7 +250,7 @@ export default function Home() {
 
         {/* 3. 결과 화면 */}
         {started && showResult && recommendedMenu && (
-          <div className="flex-1 flex flex-col overflow-y-auto z-10 p-4 pt-12 pb-24">
+          <div className="flex-1 flex flex-col overflow-y-auto z-10 p-3 sm:p-4 pt-10 sm:pt-12 pb-6 sm:pb-8">
             <ResultCard
               menu={recommendedMenu}
               reason={getRecommendReason(recommendedMenu, selections)}
@@ -286,7 +286,7 @@ export default function Home() {
             </div>
 
             {/* Question Area */}
-            <div className="flex-1 overflow-y-auto scrollbar-hide z-10 pb-32">
+            <div className="flex-1 overflow-y-auto scrollbar-hide z-10 pb-24">
               <div className="px-6 space-y-2 mb-6 text-center">
                 <motion.h2
                   key={`t-${currentStep}`}

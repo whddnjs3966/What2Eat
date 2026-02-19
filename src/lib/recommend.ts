@@ -145,7 +145,8 @@ export function getWeatherContext(
     temp: number | null,
     condition: string | null
 ): string | null {
-    if (condition && (condition.includes("rain") || condition.includes("drizzle"))) {
+    const c = condition?.toLowerCase() ?? "";
+    if (c.includes("rain") || c.includes("drizzle") || c.includes("thunderstorm")) {
         return "비";
     }
     if (temp !== null) {

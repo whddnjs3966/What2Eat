@@ -25,7 +25,7 @@ export default function StepSelector({
     };
 
     return (
-        <div className="grid grid-cols-2 gap-3 w-full px-2 pb-20">
+        <div className="grid grid-cols-2 gap-3 w-full px-2 pb-4">
             <AnimatePresence mode="popLayout">
                 {options.map((option, index) => (
                     <motion.button

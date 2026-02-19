@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useTransform, useSpring } from "framer-motion";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface PhoneFrameProps {
     children: React.ReactNode;
@@ -9,6 +9,7 @@ interface PhoneFrameProps {
 
 export default function PhoneFrame({ children }: PhoneFrameProps) {
     const ref = useRef<HTMLDivElement>(null);
+    const [isDesktop, setIsDesktop] = useState(false);
 
     // Mouse tilt effect
     const x = useMotionValue(0);
@@ -17,29 +18,45 @@ export default function PhoneFrame({ children }: PhoneFrameProps) {
     const mouseX = useSpring(x, { stiffness: 300, damping: 30 });
     const mouseY = useSpring(y, { stiffness: 300, damping: 30 });
 
-    const rotateX = useTransform(mouseY, [-0.5, 0.5], [5, -5]); // Reduced tilt
-    const rotateY = useTransform(mouseX, [-0.5, 0.5], [-5, 5]); // Reduced tilt
-    const brightness = useTransform(mouseY, [-0.5, 0.5], [1.1, 0.9]); // Simulation of light source
+    const rotateX = useTransform(mouseY, [-0.5, 0.5], [5, -5]);
+    const rotateY = useTransform(mouseX, [-0.5, 0.5], [-5, 5]);
+
+    useEffect(() => {
+        const mq = window.matchMedia("(min-width: 768px)");
+        setIsDesktop(mq.matches);
+
+        const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+        mq.addEventListener("change", handler);
+
+        return () => mq.removeEventListener("change", handler);
+    }, []);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
-            // Calculate normalized position (-0.5 to 0.5)
             const { innerWidth, innerHeight } = window;
             const xPos = (e.clientX / innerWidth) - 0.5;
             const yPos = (e.clientY / innerHeight) - 0.5;
-
             x.set(xPos);
             y.set(yPos);
         };
 
-        // Only add listener on desktop
-        if (window.matchMedia("(min-width: 768px)").matches) {
+        if (isDesktop) {
             window.addEventListener("mousemove", handleMouseMove);
         }
 
         return () => window.removeEventListener("mousemove", handleMouseMove);
-    }, [x, y]);
+    }, [x, y, isDesktop]);
 
+    // 모바일: 전체화면, 폰 프레임 없음
+    if (!isDesktop) {
+        return (
+            <div className="min-h-[100dvh] w-full bg-[#1A1A2E] overflow-hidden">
+                {children}
+            </div>
+        );
+    }
+
+    // 데스크톱: 폰 프레임 UI
     return (
         <div className="min-h-screen w-full flex items-center justify-center p-4 md:p-8 perspective-1000 overflow-hidden">
             <motion.div

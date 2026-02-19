@@ -22,10 +22,10 @@ export const stepsConfig: StepConfig[] = [
         title: "식사 시간",
         subtitle: "언제 드실 예정인가요?",
         options: [
-            { id: "아침", label: "아침", emoji: "🌅", description: "가벼운 아침 식사" },
+            { id: "아침", label: "아침", emoji: "🌤️", description: "가벼운 아침 식사" },
             { id: "점심", label: "점심", emoji: "☀️", description: "든든한 한 끼" },
-            { id: "저녁", label: "저녁", emoji: "🌆", description: "하루를 마무리하는 식사" },
-            { id: "야식", label: "야식", emoji: "🌙", description: "늦은 밤 간식·안주" },
+            { id: "저녁", label: "저녁", emoji: "🌙", description: "하루를 마무리하는 식사" },
+            { id: "야식", label: "야식", emoji: "🌜", description: "늦은 밤 간식·안주" },
             { id: "간식", label: "브런치 · 간식", emoji: "☕", description: "가볍게 즐기기" },
         ],
     },

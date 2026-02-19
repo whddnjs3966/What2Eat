@@ -7,8 +7,12 @@ export async function GET(request: Request) {
 
     const apiKey = process.env.OPENWEATHER_API_KEY;
 
-    // API 키가 없거나 좌표가 없으면 더미 데이터 반환
-    if (!apiKey || !lat || !lon) {
+    // 좌표 유효성 검증 (숫자만 허용, 범위 체크)
+    const latNum = lat ? parseFloat(lat) : NaN;
+    const lonNum = lon ? parseFloat(lon) : NaN;
+
+    if (!apiKey || !lat || !lon || isNaN(latNum) || isNaN(lonNum) ||
+        latNum < -90 || latNum > 90 || lonNum < -180 || lonNum > 180) {
         console.log("Weather API: Returning dummy data (No API Key or Coords)");
         return NextResponse.json({
             temp: 22,
@@ -19,7 +23,7 @@ export async function GET(request: Request) {
 
     try {
         const res = await fetch(
-            `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+            `https://api.openweathermap.org/data/2.5/weather?lat=${latNum}&lon=${lonNum}&appid=${apiKey}&units=metric`
         );
 
         if (!res.ok) {
