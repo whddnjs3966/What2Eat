@@ -214,9 +214,9 @@ export default function Home() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5 }}
-                  className="py-2 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/10 inline-block"
+                  className="py-2 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/10 inline-block max-w-[90vw]"
                 >
-                  <p className="text-violet-200 text-sm font-medium">
+                  <p className="text-violet-200 text-xs md:text-sm font-medium whitespace-nowrap overflow-hidden text-ellipsis px-1">
                     {getWeatherRecommendation(weather.temp, weather.condition)}
                   </p>
                 </motion.div>
