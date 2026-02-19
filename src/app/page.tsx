@@ -14,7 +14,7 @@ import {
 
 import { useAppStore } from "@/store/useAppStore";
 import { stepsConfig } from "@/data/stepsConfig";
-import { recommendMenu, getRecommendReason, getWeatherContext } from "@/lib/recommend";
+import { recommendMenu, getRecommendReason, getWeatherContext, getWeatherRecommendation } from "@/lib/recommend";
 import StepSelector from "@/components/StepSelector";
 import ProgressBar from "@/components/ProgressBar";
 import ResultCard from "@/components/ResultCard";
@@ -217,15 +217,7 @@ export default function Home() {
                   className="py-2 px-4 rounded-full bg-white/10 backdrop-blur-md border border-white/10 inline-block"
                 >
                   <p className="text-violet-200 text-sm font-medium">
-                    {weather.condition === "Rain" || weather.condition === "Drizzle" || weather.condition === "Thunderstorm"
-                      ? "비 오는 날엔 따끈한 국물이나 파전 어때요? ☔️"
-                      : weather.condition === "Snow"
-                        ? "눈 내리는 날엔 따뜻한 우동 한 그릇! ❄️"
-                        : (weather.temp ?? 0) >= 28
-                          ? "더운 날씨엔 시원한 냉면이나 콩국수! ☀️"
-                          : (weather.temp ?? 0) <= 5
-                            ? "쌀쌀한 날씨엔 뜨끈한 국밥 한 그릇! 🧣"
-                            : "오늘 같은 날씨엔 맛있는 한 끼로 기분 전환! 🍽️"}
+                    {getWeatherRecommendation(weather.temp, weather.condition)}
                   </p>
                 </motion.div>
               )}
