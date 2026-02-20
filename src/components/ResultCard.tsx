@@ -29,7 +29,7 @@ export default function ResultCard({
             transition={{ type: "spring", stiffness: 200, damping: 20, delay: 0.3 }}
             className="w-full mx-auto"
         >
-            <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl">
+            <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/8 shadow-2xl">
                 {/* 음식 이모지 히어로 영역 */}
                 <div className="relative h-28 sm:h-36 bg-gradient-to-br from-violet-600/40 via-fuchsia-600/30 to-purple-800/40 flex items-center justify-center overflow-hidden">
                     {/* 배경 장식 */}
@@ -47,7 +47,7 @@ export default function ResultCard({
                     </motion.span>
 
                     {/* Cuisine Badge */}
-                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/15">
+                    <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/50 border border-white/15">
                         <span className="text-[11px] text-white/90 font-medium">
                             {menu.tags.cuisine.join(", ")}
                         </span>
@@ -57,12 +57,12 @@ export default function ResultCard({
                     <div className="absolute inset-x-0 bottom-0 px-3 pb-2.5 pt-8 bg-gradient-to-t from-black/60 to-transparent">
                         <div className="flex flex-wrap gap-1">
                             {menu.tags.taste.slice(0, 3).map((tag) => (
-                                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/15 backdrop-blur-sm text-white/90 border border-white/10">
+                                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/15 text-white/90 border border-white/10">
                                     #{tag}
                                 </span>
                             ))}
                             {menu.tags.context.slice(0, 2).map((tag) => (
-                                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/15 backdrop-blur-sm text-white/90 border border-white/10">
+                                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded-md bg-white/15 text-white/90 border border-white/10">
                                     #{tag}
                                 </span>
                             ))}
