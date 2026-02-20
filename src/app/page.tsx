@@ -127,7 +127,7 @@ export default function Home() {
   }, [setIsAnimating, setShowResult]);
 
   const handleLoadingComplete = useCallback(() => {
-    const result = recommendMenu(selections, excludeIds);
+    const result = recommendMenu(selections, excludeIds, weather.temp);
     if (result.recommended) {
       setRecommendedMenu(result.recommended);
       setAlternativeMenus(result.alternatives);
