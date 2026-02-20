@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+naver*.html
 
 # debug
 npm-debug.log*
