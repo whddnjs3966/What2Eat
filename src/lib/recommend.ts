@@ -90,6 +90,19 @@ const MEALTIME_DISHTYPE_AFFINITY: Record<string, Record<string, number>> = {
 };
 
 /**
+ * 태그 매칭 스코어 헬퍼 — 선택값이 없으면 0, 일치하면 bonus, 불일치하면 penalty
+ */
+function scoreTagMatch(
+    selected: string[],
+    menuTags: string[],
+    bonus: number,
+    penalty = 0
+): number {
+    if (selected.length === 0) return 0;
+    return selected.some((s) => menuTags.includes(s)) ? bonus : penalty;
+}
+
+/**
  * 시너지 조건이 현재 selections에 매칭되는지 확인
  */
 function checkSynergyCondition(
@@ -165,13 +178,9 @@ export function recommendMenu(
 
         // --- 1b. 동행 인원 매칭 ---
         if (selections.companion.length > 0) {
-            if (selections.companion.some(c => menu.tags.companion.includes(c))) {
-                score += 20;
-                breakdown["companion"] = 20;
-            } else {
-                score -= 15;
-                breakdown["companion"] = -15;
-            }
+            const s = scoreTagMatch(selections.companion, menu.tags.companion, 20, -15);
+            score += s;
+            breakdown["companion"] = s;
         }
 
         // --- 1c. 맛 선호 매칭 (복수 선택, 비율 기반) ---
@@ -190,31 +199,24 @@ export function recommendMenu(
 
         // --- 1d. 온도 선호 매칭 ---
         if (selections.temperature.length > 0 && !selections.temperature.includes("상온")) {
-            if (selections.temperature.some(t => menu.tags.temperature.includes(t))) {
-                score += 15;
-                breakdown["temperature"] = 15;
-            } else {
-                score -= 20;
-                breakdown["temperature"] = -20;
-            }
+            const s = scoreTagMatch(selections.temperature, menu.tags.temperature, 15, -20);
+            score += s;
+            breakdown["temperature"] = s;
         }
 
         // --- 1e. 가격대 매칭 ---
         if (selections.budget.length > 0 && !selections.budget.includes("상관없음")) {
-            if (selections.budget.some(b => menu.tags.budget.includes(b))) {
-                score += 15;
-                breakdown["budget"] = 15;
-            } else {
-                score -= 10;
-                breakdown["budget"] = -10;
-            }
+            const s = scoreTagMatch(selections.budget, menu.tags.budget, 15, -10);
+            score += s;
+            breakdown["budget"] = s;
         }
 
         // --- 1f. 특수 상황 매칭 (보너스 Only, 패널티 없음) ---
         if (selections.context.length > 0 && !selections.context.includes("패스")) {
-            if (selections.context.some(c => menu.tags.context.includes(c))) {
-                score += 25;
-                breakdown["context"] = 25;
+            const s = scoreTagMatch(selections.context, menu.tags.context, 25);
+            if (s > 0) {
+                score += s;
+                breakdown["context"] = s;
             }
         }
 

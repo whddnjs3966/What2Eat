@@ -22,7 +22,6 @@ interface AppState {
 
     // 추천 결과
     recommendedMenu: MenuItem | null;
-    alternativeMenus: MenuItem[];
 
     // 결과 페이지 표시
     showResult: boolean;
@@ -41,7 +40,6 @@ interface AppState {
     prevStep: () => void;
     setSelection: (stepId: string, value: string | string[]) => void;
     setRecommendedMenu: (menu: MenuItem) => void;
-    setAlternativeMenus: (menus: MenuItem[]) => void;
     setShowResult: (show: boolean) => void;
     setIsAnimating: (animating: boolean) => void;
     setWeather: (temp: number, condition: string) => void;
@@ -64,7 +62,6 @@ export const useAppStore = create<AppState>((set) => ({
     currentStep: 0,
     selections: { ...initialSelections },
     recommendedMenu: null,
-    alternativeMenus: [],
     showResult: false,
     isAnimating: false,
     weather: { temp: null, condition: null, loaded: false },
@@ -90,7 +87,6 @@ export const useAppStore = create<AppState>((set) => ({
         })),
 
     setRecommendedMenu: (menu) => set({ recommendedMenu: menu }),
-    setAlternativeMenus: (menus) => set({ alternativeMenus: menus }),
     setShowResult: (show) => set({ showResult: show }),
     setIsAnimating: (animating) => set({ isAnimating: animating }),
 
@@ -102,7 +98,6 @@ export const useAppStore = create<AppState>((set) => ({
             currentStep: 0,
             selections: { ...initialSelections },
             recommendedMenu: null,
-            alternativeMenus: [],
             showResult: false,
             isAnimating: false,
         }),

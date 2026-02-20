@@ -160,37 +160,40 @@ export default function ResultCard({
                         {/* 내 주변 식당 보기 */}
                         <button
                             onClick={onMap}
+                            aria-label={`${menu.name} 주변 식당 지도에서 검색`}
                             className="w-full flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl
                 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500
                 text-white font-semibold text-xs sm:text-sm transition-all duration-300
                 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40
-                active:scale-[0.98]"
+                active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
                         >
-                            <MapPin size={16} className="shrink-0" />
+                            <MapPin size={16} className="shrink-0" aria-hidden="true" />
                             <span className="truncate">내 주변 식당 보기</span>
-                            <ExternalLink size={14} className="opacity-60 shrink-0" />
+                            <ExternalLink size={14} className="opacity-60 shrink-0" aria-hidden="true" />
                         </button>
 
                         {/* 하단 버튼 그룹 */}
                         <div className="grid grid-cols-2 gap-2">
                             <button
                                 onClick={onRetry}
+                                aria-label="다른 메뉴 다시 추천받기"
                                 className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl
                   bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20
                   text-white/70 hover:text-white font-medium text-xs transition-all duration-300
-                  active:scale-[0.98]"
+                  active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
                             >
-                                <RefreshCw size={14} className="shrink-0" />
+                                <RefreshCw size={14} className="shrink-0" aria-hidden="true" />
                                 <span>다시 추천</span>
                             </button>
                             <button
                                 onClick={onShare}
+                                aria-label="추천 메뉴 공유하기"
                                 className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl
                   bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20
                   text-white/70 hover:text-white font-medium text-xs transition-all duration-300
-                  active:scale-[0.98]"
+                  active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
                             >
-                                <Share2 size={14} className="shrink-0" />
+                                <Share2 size={14} className="shrink-0" aria-hidden="true" />
                                 <span>공유</span>
                             </button>
                         </div>

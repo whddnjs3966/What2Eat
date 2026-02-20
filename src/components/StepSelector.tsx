@@ -38,8 +38,11 @@ export default function StepSelector({
                         }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => onSelect(option.id)}
+                        aria-pressed={isSelected(option.id)}
+                        aria-label={option.description ? `${option.label}: ${option.description}` : option.label}
                         className={`
               relative flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-300
+              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400
               ${isSelected(option.id)
                                 ? "bg-violet-500/30 border-violet-400 shadow-[0_0_15px_rgba(167,139,250,0.3)]"
                                 : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"

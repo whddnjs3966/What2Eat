@@ -33,19 +33,28 @@ export default function PhoneFrame({ children }: PhoneFrameProps) {
     }, []);
 
     useEffect(() => {
+        let rafId: number | null = null;
+
         const handleMouseMove = (e: MouseEvent) => {
-            const { innerWidth, innerHeight } = window;
-            const xPos = (e.clientX / innerWidth) - 0.5;
-            const yPos = (e.clientY / innerHeight) - 0.5;
-            x.set(xPos);
-            y.set(yPos);
+            if (rafId !== null) return;
+            rafId = requestAnimationFrame(() => {
+                const { innerWidth, innerHeight } = window;
+                const xPos = (e.clientX / innerWidth) - 0.5;
+                const yPos = (e.clientY / innerHeight) - 0.5;
+                x.set(xPos);
+                y.set(yPos);
+                rafId = null;
+            });
         };
 
         if (isDesktop) {
             window.addEventListener("mousemove", handleMouseMove);
         }
 
-        return () => window.removeEventListener("mousemove", handleMouseMove);
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+            if (rafId !== null) cancelAnimationFrame(rafId);
+        };
     }, [x, y, isDesktop]);
 
     // 모바일: 전체화면, 폰 프레임 없음
