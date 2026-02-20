@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import { MenuItem } from "@/data/menuDatabase";
-import { MapPin, RefreshCw, Share2, Bookmark, ExternalLink } from "lucide-react";
+import { MapPin, RefreshCw, Share2, ExternalLink } from "lucide-react";
 
 interface ResultCardProps {
     menu: MenuItem;
@@ -20,6 +20,7 @@ export default function ResultCard({
     onMap,
 }: ResultCardProps) {
     const spicyDots = Array.from({ length: 3 }, (_, i) => i < menu.spicyLevel);
+    const spicyLabel = ["안매움", "약간매움", "보통매움", "아주매움"][menu.spicyLevel] ?? "보통매움";
 
     return (
         <motion.div
@@ -30,7 +31,7 @@ export default function ResultCard({
         >
             <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-xl shadow-2xl">
                 {/* 음식 이모지 히어로 영역 */}
-                <div className="relative h-32 sm:h-40 bg-gradient-to-br from-violet-600/40 via-fuchsia-600/30 to-purple-800/40 flex items-center justify-center overflow-hidden">
+                <div className="relative h-28 sm:h-36 bg-gradient-to-br from-violet-600/40 via-fuchsia-600/30 to-purple-800/40 flex items-center justify-center overflow-hidden">
                     {/* 배경 장식 */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.08)_0%,transparent_60%)]" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(167,139,250,0.15)_0%,transparent_50%)]" />
@@ -70,20 +71,19 @@ export default function ResultCard({
                 </div>
 
                 {/* 정보 영역 */}
-                <div className="p-3 sm:p-4 space-y-2">
-                    {/* 제목 + 가격 (세로 배치) */}
+                <div className="p-3 sm:p-5 space-y-3">
+                    {/* 제목 + 가격 */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.6 }}
                     >
-                        <h2 className="text-lg sm:text-xl font-bold text-white leading-tight">
+                        <h2 className="text-xl sm:text-2xl font-bold text-white leading-tight">
                             {menu.name}
                         </h2>
-                        <div className="flex items-center gap-2 mt-1">
-                            <p className="text-xs text-white/40">{menu.nameEn}</p>
-                            <span className="text-[10px] text-white/30">·</span>
-                            <span className="text-xs font-semibold text-violet-300">{menu.priceRange}</span>
+                        <div className="flex items-center gap-2 mt-1.5 min-w-0">
+                            <p className="text-xs sm:text-sm text-white/40 truncate min-w-0 flex-1">{menu.nameEn}</p>
+                            <span className="text-xs sm:text-sm font-semibold text-violet-300 shrink-0">{menu.priceRange}</span>
                         </div>
                     </motion.div>
 
@@ -94,51 +94,57 @@ export default function ResultCard({
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.8 }}
                     >
-                        <p className="text-[11px] sm:text-xs text-violet-200 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-violet-200 leading-relaxed">
                             &ldquo;{reason}&rdquo;
                         </p>
                     </motion.div>
 
                     {/* 메타 태그 */}
                     <motion.div
-                        className="flex flex-wrap gap-1.5"
+                        className="flex flex-wrap gap-2"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.9 }}
                     >
                         {/* 매움 레벨 */}
-                        <div className="flex items-center gap-1 px-2 py-1 bg-white/5 rounded-lg border border-white/10">
-                            <span className="text-[10px] text-white/60">매움</span>
-                            <div className="flex gap-0.5">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg border border-white/10">
+                            <span className="text-xs text-white/50">매움</span>
+                            <div className="flex gap-1">
                                 {spicyDots.map((active, i) => (
                                     <span
                                         key={i}
-                                        className={`w-1.5 h-1.5 rounded-full ${active ? "bg-red-400" : "bg-white/20"}`}
+                                        className={`w-2.5 h-2.5 rounded-full ${active ? "bg-red-400 shadow-[0_0_5px_rgba(248,113,113,0.6)]" : "bg-white/20"}`}
                                     />
                                 ))}
                             </div>
+                            <span className="text-xs font-semibold text-white/80">{spicyLabel}</span>
                         </div>
 
-                        <div className="px-2 py-1 bg-white/5 rounded-lg border border-white/10">
-                            <span className="text-[10px] text-white/60">⏱ {menu.cookTime}</span>
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg border border-white/10">
+                            <span className="text-xs text-white/50">조리</span>
+                            <span className="text-xs font-semibold text-white/90">{menu.cookTime}</span>
                         </div>
 
-                        <div className="px-2 py-1 bg-white/5 rounded-lg border border-white/10">
-                            <span className="text-[10px] text-white/60">🔥 {menu.calories}</span>
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg border border-white/10">
+                            <span className="text-xs text-white/50">칼로리</span>
+                            <span className="text-xs font-semibold text-white/90">{menu.calories}</span>
                         </div>
 
-                        <div className="px-2 py-1 bg-white/5 rounded-lg border border-white/10">
-                            <span className="text-[10px] text-white/60">🍱 {menu.tags.satiety}</span>
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg border border-white/10">
+                            <span className="text-xs text-white/50">포만감</span>
+                            <span className="text-xs font-semibold text-violet-300">{menu.tags.satiety}</span>
                         </div>
 
-                        <div className="px-2 py-1 bg-white/5 rounded-lg border border-white/10">
-                            <span className="text-[10px] text-white/60">👄 {menu.tags.texture.join(", ")}</span>
+                        <div className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg border border-white/10">
+                            <span className="text-xs text-white/50">식감</span>
+                            <span className="text-xs font-semibold text-white/90">{menu.tags.texture.join(", ")}</span>
                         </div>
 
                         {menu.tags.temperature.map((temp) => (
-                            <div key={temp} className="px-2 py-0.5 bg-white/5 rounded-lg border border-white/10">
-                                <span className="text-[10px] text-white/60">
-                                    {temp === "뜨거운" ? "🔥" : temp === "차가운" ? "❄️" : "🌡️"} {temp}
+                            <div key={temp} className="flex items-center gap-2 px-3 py-2 bg-white/5 rounded-lg border border-white/10">
+                                <span className="text-xs text-white/50">온도</span>
+                                <span className="text-xs font-semibold text-white/90">
+                                    {temp} {temp === "뜨거운" ? "🔥" : temp === "차가운" ? "❄️" : "🌡️"}
                                 </span>
                             </div>
                         ))}
@@ -146,7 +152,7 @@ export default function ResultCard({
 
                     {/* CTA 버튼 */}
                     <motion.div
-                        className="space-y-2 pt-1"
+                        className="space-y-3 pt-2"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 1.0 }}
@@ -154,46 +160,38 @@ export default function ResultCard({
                         {/* 내 주변 식당 보기 */}
                         <button
                             onClick={onMap}
-                            className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl
+                            className="w-full flex items-center justify-center gap-1.5 py-3 px-4 rounded-xl
                 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500
-                text-white font-semibold text-[11px] sm:text-xs transition-all duration-300
+                text-white font-semibold text-xs sm:text-sm transition-all duration-300
                 shadow-lg shadow-violet-500/20 hover:shadow-violet-500/40
                 active:scale-[0.98]"
                         >
-                            <MapPin size={15} className="shrink-0" />
+                            <MapPin size={16} className="shrink-0" />
                             <span className="truncate">내 주변 식당 보기</span>
-                            <ExternalLink size={12} className="opacity-60 shrink-0" />
+                            <ExternalLink size={14} className="opacity-60 shrink-0" />
                         </button>
 
                         {/* 하단 버튼 그룹 */}
-                        <div className="grid grid-cols-[1fr_1fr_auto] gap-1.5">
+                        <div className="grid grid-cols-2 gap-2">
                             <button
                                 onClick={onRetry}
-                                className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl
+                                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl
                   bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20
-                  text-white/70 hover:text-white font-medium text-[11px] transition-all duration-300
+                  text-white/70 hover:text-white font-medium text-xs transition-all duration-300
                   active:scale-[0.98]"
                             >
-                                <RefreshCw size={12} className="shrink-0" />
+                                <RefreshCw size={14} className="shrink-0" />
                                 <span>다시 추천</span>
                             </button>
                             <button
                                 onClick={onShare}
-                                className="flex items-center justify-center gap-1 py-2 px-2 rounded-xl
+                                className="flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl
                   bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20
-                  text-white/70 hover:text-white font-medium text-[11px] transition-all duration-300
+                  text-white/70 hover:text-white font-medium text-xs transition-all duration-300
                   active:scale-[0.98]"
                             >
-                                <Share2 size={12} className="shrink-0" />
+                                <Share2 size={14} className="shrink-0" />
                                 <span>공유</span>
-                            </button>
-                            <button
-                                className="flex items-center justify-center py-2 px-3 rounded-xl
-                  bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20
-                  text-white/70 hover:text-white transition-all duration-300
-                  active:scale-[0.98]"
-                            >
-                                <Bookmark size={12} />
                             </button>
                         </div>
                     </motion.div>
