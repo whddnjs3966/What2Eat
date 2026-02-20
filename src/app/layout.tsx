@@ -15,7 +15,10 @@ export const metadata: Metadata = {
     description: "간단한 선택으로 오늘의 완벽한 메뉴를 찾아보세요!",
     type: "website",
     locale: "ko_KR",
+    url: "https://what2eat.kr",
+    siteName: "What2Eat",
   },
+  metadataBase: new URL("https://what2eat.kr"),
 };
 
 export const viewport = {
