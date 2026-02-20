@@ -2,14 +2,15 @@ import { create } from "zustand";
 import { MenuItem } from "@/data/menuDatabase";
 
 export interface Selections {
-    mealTime: string | null;
-    companion: string | null;
-    cuisine: string | null;
+    mealTime: string[];
+    companion: string[];
+    cuisine: string[];
+    cookingMethod: string[];
     taste: string[];
-    dishType: string | null;
-    temperature: string | null;
-    budget: string | null;
-    context: string | null;
+    dishType: string[];
+    temperature: string[];
+    budget: string[];
+    context: string[];
 }
 
 interface AppState {
@@ -48,14 +49,15 @@ interface AppState {
 }
 
 const initialSelections: Selections = {
-    mealTime: null,
-    companion: null,
-    cuisine: null,
+    mealTime: [],
+    companion: [],
+    cuisine: [],
+    cookingMethod: [],
     taste: [],
-    dishType: null,
-    temperature: null,
-    budget: null,
-    context: null,
+    dishType: [],
+    temperature: [],
+    budget: [],
+    context: [],
 };
 
 export const useAppStore = create<AppState>((set) => ({

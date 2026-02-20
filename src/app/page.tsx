@@ -1,12 +1,10 @@
 "use client";
 
 import { useCallback, useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
-  ChefHat,
   ArrowLeft,
   ArrowRight,
-  SkipForward,
   RotateCcw,
   Utensils,
   Play
@@ -21,6 +19,13 @@ import ResultCard from "@/components/ResultCard";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import PhoneFrame from "@/components/PhoneFrame";
 
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    Kakao: any;
+  }
+}
+
 export default function Home() {
   const {
     currentStep,
@@ -29,7 +34,6 @@ export default function Home() {
     showResult,
     isAnimating,
     weather,
-    setStep,
     nextStep,
     prevStep,
     setSelection,
@@ -43,6 +47,16 @@ export default function Home() {
 
   const [started, setStarted] = useState(false);
   const [excludeIds, setExcludeIds] = useState<string[]>([]);
+
+  // 카카오 SDK 초기화
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.Kakao && !window.Kakao.isInitialized()) {
+      const kakaoKey = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
+      if (kakaoKey) {
+        window.Kakao.init(kakaoKey);
+      }
+    }
+  }, []);
 
   // 날씨 데이터 가져오기
   useEffect(() => {
@@ -62,10 +76,10 @@ export default function Home() {
               setWeather(data.temp, data.condition);
               const weatherContext = getWeatherContext(data.temp, data.condition);
               if (weatherContext && !selections.context) {
-                setSelection("context", weatherContext);
+                setSelection("context", [weatherContext]);
               }
             }
-          } catch (error) {
+          } catch {
             setWeather(22, "Clear");
           }
         },
@@ -77,7 +91,6 @@ export default function Home() {
   }, [weather.loaded, setWeather, setSelection, selections.context]);
 
   const prevStepRef = useRef(0);
-  const direction = currentStep >= prevStepRef.current ? 1 : -1;
   const currentConfig = stepsConfig[currentStep];
 
   const handleSelect = (optionId: string) => {
@@ -117,7 +130,7 @@ export default function Home() {
   };
 
   const handleSkip = () => {
-    setSelection(stepsConfig[currentStep].id, "패스");
+    setSelection(stepsConfig[currentStep].id, ["패스"]);
     handleNext();
   };
 
@@ -134,7 +147,7 @@ export default function Home() {
     }
     setIsAnimating(false);
     setShowResult(true);
-  }, [selections, excludeIds, setRecommendedMenu, setAlternativeMenus, setIsAnimating, setShowResult]);
+  }, [selections, excludeIds, weather.temp, setRecommendedMenu, setAlternativeMenus, setIsAnimating, setShowResult]);
 
   const handleRetry = () => {
     if (recommendedMenu) setExcludeIds((prev) => [...prev, recommendedMenu.id]);
@@ -156,15 +169,43 @@ export default function Home() {
   };
 
   const handleShare = () => {
-    if (recommendedMenu && navigator.share) {
+    if (!recommendedMenu) return;
+
+    const title = `오늘 메뉴는 ${recommendedMenu.name}이다!`;
+    const description = `😋 오늘은 ${recommendedMenu.name}이 먹고 싶어요! 같이 먹을래요?\n${getRecommendReason(recommendedMenu, selections)}`;
+
+    if (typeof window !== "undefined" && window.Kakao && window.Kakao.isInitialized()) {
+      window.Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+          title: title,
+          description: description,
+          imageUrl:
+            'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=800&auto=format&fit=crop', // Temporary placeholder image for food
+          link: {
+            mobileWebUrl: window.location.href,
+            webUrl: window.location.href,
+          },
+        },
+        buttons: [
+          {
+            title: '나도 메뉴 추천받기',
+            link: {
+              mobileWebUrl: window.location.origin,
+              webUrl: window.location.origin,
+            },
+          },
+        ],
+      });
+    } else if (navigator.share) {
       navigator.share({
-        title: `오늘 메뉴: ${recommendedMenu.name}`,
-        text: `오늘은 ${recommendedMenu.name}`,
+        title: title,
+        text: description,
         url: window.location.href,
       }).catch(() => { });
-    } else if (recommendedMenu) {
-      navigator.clipboard.writeText(`오늘은 ${recommendedMenu.name} 어때?`);
-      alert("복사됨!");
+    } else {
+      navigator.clipboard.writeText(`오늘은 ${recommendedMenu.name} 어때? 같이 먹을래요?`);
+      alert("클립보드에 메시지가 복사되었습니다!");
     }
   };
 
@@ -250,7 +291,7 @@ export default function Home() {
 
         {/* 3. 결과 화면 */}
         {started && showResult && recommendedMenu && (
-          <div className="flex-1 flex flex-col overflow-y-auto z-10 p-3 sm:p-4 pt-10 sm:pt-12 pb-6 sm:pb-8">
+          <div className="flex-1 flex flex-col overflow-y-auto z-10 p-3 sm:p-4 pt-6 sm:pt-8 pb-4 sm:pb-6">
             <ResultCard
               menu={recommendedMenu}
               reason={getRecommendReason(recommendedMenu, selections)}
@@ -260,7 +301,7 @@ export default function Home() {
             />
             <button
               onClick={handleReset}
-              className="mt-6 text-white/50 text-sm flex items-center justify-center gap-2 hover:text-white"
+              className="mt-4 text-white/50 text-sm flex items-center justify-center gap-2 hover:text-white"
             >
               <RotateCcw size={14} /> 처음으로
             </button>
@@ -308,10 +349,7 @@ export default function Home() {
 
               <StepSelector
                 options={currentConfig.options}
-                selected={currentConfig.multiSelect
-                  ? (selections[currentConfig.id as keyof typeof selections] as string[]) || []
-                  : (selections[currentConfig.id as keyof typeof selections] as string)
-                }
+                selected={selections[currentConfig.id as keyof typeof selections] as string[]}
                 multiSelect={currentConfig.multiSelect}
                 onSelect={handleSelect}
               />

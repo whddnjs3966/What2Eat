@@ -17,19 +17,15 @@ export default function LoadingAnimation({ onComplete }: LoadingAnimationProps) 
     const [currentEmoji, setCurrentEmoji] = useState("🍽️");
 
     useEffect(() => {
-        let emojiInterval: NodeJS.Timeout;
-        let timeout1: NodeJS.Timeout;
-        let timeout2: NodeJS.Timeout;
-
         // Phase 0: 빠르게 이모지 변경
-        emojiInterval = setInterval(() => {
+        const emojiInterval = setInterval(() => {
             setCurrentEmoji(
                 slotEmojis[Math.floor(Math.random() * slotEmojis.length)]
             );
         }, 80);
 
         // Phase 1: 느려지기 (1.5초 후)
-        timeout1 = setTimeout(() => {
+        const timeout1 = setTimeout(() => {
             setPhase(1);
             clearInterval(emojiInterval);
 
@@ -48,7 +44,7 @@ export default function LoadingAnimation({ onComplete }: LoadingAnimationProps) 
         }, 1500);
 
         // Phase 2: 완료 (3초 후)
-        timeout2 = setTimeout(() => {
+        const timeout2 = setTimeout(() => {
             onComplete();
         }, 3000);
 

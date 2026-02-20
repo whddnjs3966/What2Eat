@@ -15,61 +15,61 @@ const SYNERGY_RULES: {
     bonus: { tag: string; category: keyof MenuItem["tags"]; points: number };
     label: string;
 }[] = [
-    // 비 + 뜨거운 → 국찌개 보너스
-    {
-        conditions: { context: "비", temperature: "뜨거운" },
-        bonus: { tag: "국찌개", category: "dishType", points: 15 },
-        label: "비+뜨거운=국물",
-    },
-    // 비 → 파전/전류 보너스 (빵분식 중)
-    {
-        conditions: { context: "비" },
-        bonus: { tag: "빵분식", category: "dishType", points: 8 },
-        label: "비=분식",
-    },
-    // 추운날 + 국찌개 → 매콤 보너스
-    {
-        conditions: { context: "추운날", dishType: "국찌개" },
-        bonus: { tag: "매콤", category: "taste", points: 10 },
-        label: "추운날+국찌개=매콤",
-    },
-    // 더운날 → 차가운 음식 보너스
-    {
-        conditions: { context: "더운날" },
-        bonus: { tag: "차가운", category: "temperature", points: 15 },
-        label: "더운날=차가운",
-    },
-    // 해장 + 아침 → 국물 요리 강화
-    {
-        conditions: { context: "해장", mealTime: "아침" },
-        bonus: { tag: "국찌개", category: "dishType", points: 20 },
-        label: "아침해장=국물",
-    },
-    // 다이어트 → 저칼로리 보너스
-    {
-        conditions: { context: "다이어트" },
-        bonus: { tag: "저칼로리", category: "dishType", points: 15 },
-        label: "다이어트=저칼",
-    },
-    // 혼밥 + 시간없어 → 빠른 음식 보너스
-    {
-        conditions: { companion: "혼밥", context: "시간없어" },
-        bonus: { tag: "빵분식", category: "dishType", points: 10 },
-        label: "혼밥+시간없어=분식",
-    },
-    // 회식 → 고기구이 보너스
-    {
-        conditions: { companion: "회식" },
-        bonus: { tag: "고기구이", category: "dishType", points: 12 },
-        label: "회식=고기",
-    },
-    // 연인 → 양식 보너스
-    {
-        conditions: { companion: "연인" },
-        bonus: { tag: "양식", category: "cuisine", points: 8 },
-        label: "연인=양식",
-    },
-];
+        // 비 + 뜨거운 → 국찌개 보너스
+        {
+            conditions: { context: "비", temperature: "뜨거운" },
+            bonus: { tag: "국찌개", category: "dishType", points: 15 },
+            label: "비+뜨거운=국물",
+        },
+        // 비 → 파전/전류 보너스 (빵분식 중)
+        {
+            conditions: { context: "비" },
+            bonus: { tag: "빵분식", category: "dishType", points: 8 },
+            label: "비=분식",
+        },
+        // 추운날 + 국찌개 → 매콤 보너스
+        {
+            conditions: { context: "추운날", dishType: "국찌개" },
+            bonus: { tag: "매콤", category: "taste", points: 10 },
+            label: "추운날+국찌개=매콤",
+        },
+        // 더운날 → 차가운 음식 보너스
+        {
+            conditions: { context: "더운날" },
+            bonus: { tag: "차가운", category: "temperature", points: 15 },
+            label: "더운날=차가운",
+        },
+        // 해장 + 아침 → 국물 요리 강화
+        {
+            conditions: { context: "해장", mealTime: "아침" },
+            bonus: { tag: "국찌개", category: "dishType", points: 20 },
+            label: "아침해장=국물",
+        },
+        // 다이어트 → 저칼로리 보너스
+        {
+            conditions: { context: "다이어트" },
+            bonus: { tag: "저칼로리", category: "dishType", points: 15 },
+            label: "다이어트=저칼",
+        },
+        // 혼밥 + 시간없어 → 빠른 음식 보너스
+        {
+            conditions: { companion: "혼밥", context: "시간없어" },
+            bonus: { tag: "빵분식", category: "dishType", points: 10 },
+            label: "혼밥+시간없어=분식",
+        },
+        // 회식 → 고기구이 보너스
+        {
+            conditions: { companion: "회식" },
+            bonus: { tag: "고기구이", category: "dishType", points: 12 },
+            label: "회식=고기",
+        },
+        // 연인 → 양식 보너스
+        {
+            conditions: { companion: "연인" },
+            bonus: { tag: "양식", category: "cuisine", points: 8 },
+            label: "연인=양식",
+        },
+    ];
 
 // ===== 포만감 선호도 매핑 =====
 const SATIETY_PREFERENCE: Record<string, string[]> = {
@@ -134,12 +134,16 @@ export function recommendMenu(
     let db = menuDatabase.filter((m) => !excludeIds.includes(m.id));
 
     // === Step 0: 하드 필터 ===
-    if (selections.cuisine && selections.cuisine !== "상관없음") {
-        const filtered = db.filter((m) => m.tags.cuisine.includes(selections.cuisine!));
+    if (selections.cuisine.length > 0 && !selections.cuisine.includes("상관없음")) {
+        const filtered = db.filter((m) => selections.cuisine.some(c => m.tags.cuisine.includes(c)));
         if (filtered.length >= 3) db = filtered;
     }
-    if (selections.dishType && selections.dishType !== "상관없음") {
-        const filtered = db.filter((m) => m.tags.dishType.includes(selections.dishType!));
+    if (selections.dishType.length > 0 && !selections.dishType.includes("상관없음")) {
+        const filtered = db.filter((m) => selections.dishType.some(d => m.tags.dishType.includes(d)));
+        if (filtered.length >= 2) db = filtered;
+    }
+    if (selections.cookingMethod.length > 0 && !selections.cookingMethod.includes("상관없음")) {
+        const filtered = db.filter((m) => selections.cookingMethod.some(cm => m.tags.cookingMethod.includes(cm)));
         if (filtered.length >= 2) db = filtered;
     }
 
@@ -149,8 +153,8 @@ export function recommendMenu(
         const breakdown: Record<string, number> = {};
 
         // --- 1a. 시간대 매칭 (핵심, 높은 가중치) ---
-        if (selections.mealTime) {
-            if (menu.tags.mealTime.includes(selections.mealTime)) {
+        if (selections.mealTime.length > 0) {
+            if (selections.mealTime.some(t => menu.tags.mealTime.includes(t))) {
                 score += 30;
                 breakdown["mealTime"] = 30;
             } else {
@@ -160,8 +164,8 @@ export function recommendMenu(
         }
 
         // --- 1b. 동행 인원 매칭 ---
-        if (selections.companion) {
-            if (menu.tags.companion.includes(selections.companion)) {
+        if (selections.companion.length > 0) {
+            if (selections.companion.some(c => menu.tags.companion.includes(c))) {
                 score += 20;
                 breakdown["companion"] = 20;
             } else {
@@ -185,8 +189,8 @@ export function recommendMenu(
         }
 
         // --- 1d. 온도 선호 매칭 ---
-        if (selections.temperature && selections.temperature !== "상온") {
-            if (menu.tags.temperature.includes(selections.temperature)) {
+        if (selections.temperature.length > 0 && !selections.temperature.includes("상온")) {
+            if (selections.temperature.some(t => menu.tags.temperature.includes(t))) {
                 score += 15;
                 breakdown["temperature"] = 15;
             } else {
@@ -196,8 +200,8 @@ export function recommendMenu(
         }
 
         // --- 1e. 가격대 매칭 ---
-        if (selections.budget && selections.budget !== "상관없음") {
-            if (menu.tags.budget.includes(selections.budget)) {
+        if (selections.budget.length > 0 && !selections.budget.includes("상관없음")) {
+            if (selections.budget.some(b => menu.tags.budget.includes(b))) {
                 score += 15;
                 breakdown["budget"] = 15;
             } else {
@@ -207,8 +211,8 @@ export function recommendMenu(
         }
 
         // --- 1f. 특수 상황 매칭 (보너스 Only, 패널티 없음) ---
-        if (selections.context && selections.context !== "패스") {
-            if (menu.tags.context.includes(selections.context)) {
+        if (selections.context.length > 0 && !selections.context.includes("패스")) {
+            if (selections.context.some(c => menu.tags.context.includes(c))) {
                 score += 25;
                 breakdown["context"] = 25;
             }
@@ -240,29 +244,36 @@ export function recommendMenu(
         }
 
         // --- 1h. 포만감 적합도 (시간대 기반) ---
-        if (selections.mealTime && SATIETY_PREFERENCE[selections.mealTime]) {
-            const preferred = SATIETY_PREFERENCE[selections.mealTime];
-            if (preferred.includes(menu.tags.satiety)) {
-                score += 8;
-                breakdown["satiety"] = 8;
-            } else if (
-                // 야식에 배터짐, 아침에 배터짐은 살짝 패널티
-                (selections.mealTime === "야식" && menu.tags.satiety === "배터짐") ||
-                (selections.mealTime === "아침" && menu.tags.satiety === "배터짐") ||
-                (selections.mealTime === "간식" && (menu.tags.satiety === "든든함" || menu.tags.satiety === "배터짐"))
-            ) {
-                score -= 5;
-                breakdown["satiety"] = -5;
+        if (selections.mealTime.length > 0) {
+            const mTime = selections.mealTime[0];
+            if (SATIETY_PREFERENCE[mTime]) {
+                const preferred = SATIETY_PREFERENCE[mTime];
+                if (preferred.includes(menu.tags.satiety)) {
+                    score += 8;
+                    breakdown["satiety"] = 8;
+                } else if (
+                    // 야식에 배터짐, 아침에 배터짐은 살짝 패널티
+                    (mTime === "야식" && menu.tags.satiety === "배터짐") ||
+                    (mTime === "아침" && menu.tags.satiety === "배터짐") ||
+                    (mTime === "간식" && (menu.tags.satiety === "든든함" || menu.tags.satiety === "배터짐"))
+                ) {
+                    score -= 5;
+                    breakdown["satiety"] = -5;
+                }
             }
         }
 
         // --- 1i. 시간대별 요리 스타일 친화도 ---
-        if (selections.mealTime && MEALTIME_DISHTYPE_AFFINITY[selections.mealTime]) {
-            const affinityMap = MEALTIME_DISHTYPE_AFFINITY[selections.mealTime];
-            for (const dt of menu.tags.dishType) {
-                if (affinityMap[dt] !== undefined) {
-                    score += affinityMap[dt];
-                    breakdown["dishTimeAffinity"] = (breakdown["dishTimeAffinity"] || 0) + affinityMap[dt];
+        if (selections.mealTime.length > 0) {
+            for (const mTime of selections.mealTime) {
+                if (MEALTIME_DISHTYPE_AFFINITY[mTime]) {
+                    const affinityMap = MEALTIME_DISHTYPE_AFFINITY[mTime];
+                    for (const dt of menu.tags.dishType) {
+                        if (affinityMap[dt] !== undefined) {
+                            score += affinityMap[dt];
+                            breakdown[`dishTimeAffinity:${mTime}`] = (breakdown[`dishTimeAffinity:${mTime}`] || 0) + affinityMap[dt];
+                        }
+                    }
                 }
             }
         }
@@ -430,18 +441,24 @@ export function getRecommendReason(
     const reasons: string[] = [];
 
     // 1. 특수 상황 매칭
-    if (selections.context && selections.context !== "패스" && menu.tags.context.includes(selections.context)) {
-        const contextMap: Record<string, string> = {
-            "해장": "속이 풀리는 해장 메뉴로 딱이에요!",
-            "다이어트": "가볍고 건강하게 즐길 수 있어요!",
-            "컨디션": "몸이 안 좋을 때 부담 없이 먹기 좋아요.",
-            "비": "비 오는 날 분위기와 찰떡이에요!",
-            "더운날": "더운 날씨에 딱 맞는 선택이에요!",
-            "추운날": "추운 날 몸을 따뜻하게 녹여줄 거예요.",
-            "기분좋은날": "좋은 날엔 맛있는 걸로 기분 UP!",
-            "시간없어": "빠르게 든든하게 해결할 수 있어요!",
-        };
-        if (contextMap[selections.context]) reasons.push(contextMap[selections.context]);
+    if (selections.context.length > 0 && !selections.context.includes("패스")) {
+        const matchedContext = selections.context.find((c) => menu.tags.context.includes(c));
+        if (matchedContext) {
+            const contextMap: Record<string, string> = {
+                "해장": "속이 풀리는 해장 메뉴로 딱이에요!",
+                "다이어트": "가볍고 건강하게 즐길 수 있어요!",
+                "컨디션": "몸이 안 좋을 때 부담 없이 먹기 좋아요.",
+                "비": "비 오는 날 분위기와 찰떡이에요!",
+                "더운날": "더운 날씨에 딱 맞는 선택이에요!",
+                "추운날": "추운 날 몸을 따뜻하게 녹여줄 거예요.",
+                "우울해": "꿀꿀한 기분을 달래줄 소울푸드예요.",
+                "월급날": "플렉스하기 딱 좋은 럭셔리 메뉴!",
+                "넷플릭스": "화면 보며 가볍게 즐기기 편해요.",
+                "기분좋은날": "좋은 날엔 맛있는 걸로 기분 UP!",
+                "시간없어": "빠르게 든든하게 해결할 수 있어요!",
+            };
+            if (contextMap[matchedContext]) reasons.push(contextMap[matchedContext]);
+        }
     }
 
     // 2. 맛 매칭
@@ -453,16 +470,19 @@ export function getRecommendReason(
     }
 
     // 3. 동행 매칭
-    if (selections.companion) {
-        const compMap: Record<string, string> = {
-            "혼밥": "혼자서도 편하게 즐기기 좋아요.",
-            "연인": "데이트 메뉴로 분위기 있는 선택!",
-            "친구": "친구들과 나눠 먹으면 더 맛있어요!",
-            "가족": "온 가족이 함께 즐기기 좋은 메뉴예요.",
-            "회식": "다 같이 먹으면 분위기 최고!",
-        };
-        if (compMap[selections.companion] && menu.tags.companion.includes(selections.companion)) {
-            reasons.push(compMap[selections.companion]);
+    if (selections.companion.length > 0) {
+        const matchedComp = selections.companion.find((c) => menu.tags.companion.includes(c));
+        if (matchedComp) {
+            const compMap: Record<string, string> = {
+                "혼밥": "혼자서도 편하게 즐기기 좋아요.",
+                "연인": "데이트 메뉴로 분위기 있는 선택!",
+                "친구": "친구들과 나눠 먹으면 더 맛있어요!",
+                "가족": "온 가족이 함께 즐기기 좋은 메뉴예요.",
+                "회식": "다 같이 먹으면 분위기 최고!",
+            };
+            if (compMap[matchedComp]) {
+                reasons.push(compMap[matchedComp]);
+            }
         }
     }
 

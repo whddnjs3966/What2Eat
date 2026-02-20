@@ -23,6 +23,7 @@ export default function PhoneFrame({ children }: PhoneFrameProps) {
 
     useEffect(() => {
         const mq = window.matchMedia("(min-width: 768px)");
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsDesktop(mq.matches);
 
         const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);

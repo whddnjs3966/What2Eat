@@ -61,6 +61,7 @@ export default function StepSelector({
                         {/* 아이콘 (이미지 또는 이모지) */}
                         {option.iconUrl ? (
                             <div className="mb-2 rounded-md overflow-hidden shadow-sm">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src={option.iconUrl}
                                     alt={option.label}
