@@ -291,20 +291,22 @@ export default function Home() {
 
         {/* 3. 결과 화면 */}
         {started && showResult && recommendedMenu && (
-          <div className="flex-1 flex flex-col overflow-y-auto z-10 p-3 sm:p-4 pt-6 sm:pt-8 pb-4 sm:pb-6">
-            <ResultCard
-              menu={recommendedMenu}
-              reason={getRecommendReason(recommendedMenu, selections)}
-              onRetry={handleRetry}
-              onShare={handleShare}
-              onMap={handleMap}
-            />
-            <button
-              onClick={handleReset}
-              className="mt-4 text-white/50 text-sm flex items-center justify-center gap-2 hover:text-white"
-            >
-              <RotateCcw size={14} /> 처음으로
-            </button>
+          <div className="flex-1 flex flex-col overflow-y-auto scrollbar-hide z-10 p-4 sm:p-5">
+            <div className="m-auto w-full max-w-md py-6 sm:py-8">
+              <ResultCard
+                menu={recommendedMenu}
+                reason={getRecommendReason(recommendedMenu, selections)}
+                onRetry={handleRetry}
+                onShare={handleShare}
+                onMap={handleMap}
+              />
+              <button
+                onClick={handleReset}
+                className="mt-6 w-full text-white/50 text-sm flex items-center justify-center gap-2 hover:text-white"
+              >
+                <RotateCcw size={14} /> 처음으로
+              </button>
+            </div>
           </div>
         )}
 
