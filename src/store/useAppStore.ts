@@ -7,6 +7,7 @@ export interface Selections {
     cuisine: string[];
     cookingMethod: string[];
     taste: string[];
+    texture: string[];
     dishType: string[];
     temperature: string[];
     budget: string[];
@@ -52,6 +53,7 @@ const initialSelections: Selections = {
     cuisine: [],
     cookingMethod: [],
     taste: [],
+    texture: [],
     dishType: [],
     temperature: [],
     budget: [],
@@ -70,7 +72,7 @@ export const useAppStore = create<AppState>((set) => ({
 
     nextStep: () =>
         set((state) => ({
-            currentStep: Math.min(state.currentStep + 1, 8),
+            currentStep: Math.min(state.currentStep + 1, 9),
         })),
 
     prevStep: () =>

@@ -1,4 +1,4 @@
-// Step definitions — 8단계 선택 플로우 구성 데이터
+// Step definitions — 10단계 선택 플로우 구성 데이터 (v3: 식감 질문 추가)
 export interface StepOption {
     id: string;
     label: string;
@@ -54,6 +54,7 @@ export const stepsConfig: StepConfig[] = [
             { id: "일식", label: "일식", emoji: "🇯🇵", iconUrl: "https://flagcdn.com/w80/jp.png", description: "정갈하고 깊은 맛" },
             { id: "양식", label: "양식", emoji: "🇺🇸", iconUrl: "https://flagcdn.com/w80/us.png", description: "우아한 서양의 맛" },
             { id: "아시안", label: "아시안", emoji: "🇻🇳", iconUrl: "https://flagcdn.com/w80/vn.png", description: "이국적인 향신료" },
+            { id: "인도", label: "인도 · 남아시아", emoji: "🇮🇳", iconUrl: "https://flagcdn.com/w80/in.png", description: "깊고 풍부한 향신료" },
             { id: "기타", label: "멕시칸 · 기타", emoji: "🌮", iconUrl: "https://flagcdn.com/w80/mx.png", description: "색다른 별미가 필요할 때" },
             { id: "상관없음", label: "상관없음", emoji: "🔀", description: "아무거나 다 좋아!" },
         ],
@@ -68,6 +69,7 @@ export const stepsConfig: StepConfig[] = [
             { id: "구이볶음", label: "불판 위 구이·볶음", emoji: "🍳", description: "지글지글 소리까지 맛있는" },
             { id: "튀김", label: "바삭바삭 튀김", emoji: "🍤", description: "기름에 튀긴 건 다 맛있어" },
             { id: "찜삶음", label: "부드러운 찜·삶음", emoji: "♨️", description: "건강하고 촉촉하게" },
+            { id: "오븐화덕", label: "오븐 · 화덕구이", emoji: "🔥", description: "겉바속촉 화덕의 마법" },
             { id: "날것", label: "신선한 날것·콜드", emoji: "🥗", description: "재료 본연의 산뜻함" },
             { id: "상관없음", label: "상관없음", emoji: "🔀", description: "맛있으면 장땡!" },
         ],
@@ -88,6 +90,20 @@ export const stepsConfig: StepConfig[] = [
         ],
     },
     {
+        id: "texture",
+        title: "식감",
+        subtitle: "어떤 식감이 좋으세요?",
+        multiSelect: true,
+        options: [
+            { id: "바삭", label: "바삭바삭 크런치", emoji: "🥨", description: "씹는 맛이 최고!" },
+            { id: "쫄깃", label: "쫄깃탱글 면발", emoji: "🍝", description: "탱탱한 식감의 매력" },
+            { id: "부드러움", label: "부드럽게 녹는", emoji: "🧈", description: "입에서 사르르" },
+            { id: "아삭", label: "아삭아삭 신선한", emoji: "🥗", description: "채소의 싱그러움" },
+            { id: "꾸덕", label: "꾸덕촉촉 진한", emoji: "🍮", description: "진하고 농밀한 맛" },
+            { id: "상관없음", label: "상관없음", emoji: "🔀", description: "식감은 상관없어요!" },
+        ],
+    },
+    {
         id: "dishType",
         title: "음식 종류",
         subtitle: "어떤 메뉴가 생각나시나요?",
@@ -97,6 +113,7 @@ export const stepsConfig: StepConfig[] = [
             { id: "면", label: "호로록 면", emoji: "🍜", description: "라면, 파스타, 냉면" },
             { id: "국찌개", label: "뜨끈한 국/찌개", emoji: "🍲", description: "김치찌개, 탕, 전골" },
             { id: "고기구이", label: "육식파 고기", emoji: "🥩", description: "삼겹살, 스테이크" },
+            { id: "해산물", label: "바다의 맛 해산물", emoji: "🦐", description: "회, 조개구이, 새우" },
             { id: "빵분식", label: "빵돌이/빵순이 & 분식", emoji: "🍕", description: "떡볶이, 피자, 샌드위치" },
             { id: "샐러드", label: "가벼운 샐러드/포케", emoji: "🥗", description: "건강 챙기기 건강식" },
             { id: "디저트", label: "디저트 & 카페", emoji: "🍰", description: "여유로운 브런치" },
@@ -145,4 +162,5 @@ export const stepsConfig: StepConfig[] = [
         ],
     },
 ];
+
 

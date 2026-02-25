@@ -31,7 +31,7 @@ export default function ResultCard({
         >
             <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-white/8 shadow-2xl">
                 {/* 음식 이모지 히어로 영역 */}
-                <div className="relative h-28 sm:h-36 bg-gradient-to-br from-violet-600/40 via-fuchsia-600/30 to-purple-800/40 flex items-center justify-center overflow-hidden">
+                <div className="relative h-36 sm:h-44 bg-gradient-to-br from-violet-600/40 via-fuchsia-600/30 to-purple-800/40 flex items-center justify-center overflow-hidden">
                     {/* 배경 장식 */}
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_40%,rgba(255,255,255,0.08)_0%,transparent_60%)]" />
                     <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_60%,rgba(167,139,250,0.15)_0%,transparent_50%)]" />
@@ -41,7 +41,7 @@ export default function ResultCard({
                         initial={{ scale: 0, rotate: -20 }}
                         animate={{ scale: 1, rotate: 0 }}
                         transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.5 }}
-                        className="text-6xl sm:text-7xl drop-shadow-lg select-none"
+                        className="text-7xl sm:text-8xl drop-shadow-lg select-none"
                     >
                         {menu.emoji}
                     </motion.span>
@@ -71,7 +71,7 @@ export default function ResultCard({
                 </div>
 
                 {/* 정보 영역 */}
-                <div className="p-3 sm:p-5 space-y-3">
+                <div className="p-4 sm:p-6 space-y-4">
                     {/* 제목 + 가격 */}
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}

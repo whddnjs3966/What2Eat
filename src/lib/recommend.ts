@@ -1,4 +1,4 @@
-// 추천 알고리즘 v2 — 필터링 + 다층 가중치 스코어링 + 시너지 보너스 + 다양성 보장
+// 추천 알고리즘 v3 — 고도화: 조리법 스코어링 + 가중치 균형 + 식감 질문 반영 + 다양성 강화
 import { MenuItem, menuDatabase } from "@/data/menuDatabase";
 import { Selections } from "@/store/useAppStore";
 
@@ -9,7 +9,6 @@ interface ScoredMenu {
 }
 
 // ===== 시너지 보너스 정의 =====
-// 특정 조합이 선택되면 해당 태그를 가진 메뉴에 추가 점수
 const SYNERGY_RULES: {
     conditions: Partial<Record<keyof Selections, string | string[]>>;
     bonus: { tag: string; category: keyof MenuItem["tags"]; points: number };
@@ -18,55 +17,55 @@ const SYNERGY_RULES: {
         // 비 + 뜨거운 → 국찌개 보너스
         {
             conditions: { context: "비", temperature: "뜨거운" },
-            bonus: { tag: "국찌개", category: "dishType", points: 15 },
+            bonus: { tag: "국찌개", category: "dishType", points: 12 },
             label: "비+뜨거운=국물",
         },
-        // 비 → 파전/전류 보너스 (빵분식 중)
+        // 비 → 파전/전류 보너스
         {
             conditions: { context: "비" },
-            bonus: { tag: "빵분식", category: "dishType", points: 8 },
+            bonus: { tag: "빵분식", category: "dishType", points: 6 },
             label: "비=분식",
         },
         // 추운날 + 국찌개 → 매콤 보너스
         {
             conditions: { context: "추운날", dishType: "국찌개" },
-            bonus: { tag: "매콤", category: "taste", points: 10 },
+            bonus: { tag: "매콤", category: "taste", points: 8 },
             label: "추운날+국찌개=매콤",
         },
         // 더운날 → 차가운 음식 보너스
         {
             conditions: { context: "더운날" },
-            bonus: { tag: "차가운", category: "temperature", points: 15 },
+            bonus: { tag: "차가운", category: "temperature", points: 12 },
             label: "더운날=차가운",
         },
         // 해장 + 아침 → 국물 요리 강화
         {
             conditions: { context: "해장", mealTime: "아침" },
-            bonus: { tag: "국찌개", category: "dishType", points: 20 },
+            bonus: { tag: "국찌개", category: "dishType", points: 15 },
             label: "아침해장=국물",
         },
         // 다이어트 → 저칼로리 보너스
         {
             conditions: { context: "다이어트" },
-            bonus: { tag: "저칼로리", category: "dishType", points: 15 },
+            bonus: { tag: "저칼로리", category: "dishType", points: 12 },
             label: "다이어트=저칼",
         },
         // 혼밥 + 시간없어 → 빠른 음식 보너스
         {
             conditions: { companion: "혼밥", context: "시간없어" },
-            bonus: { tag: "빵분식", category: "dishType", points: 10 },
+            bonus: { tag: "빵분식", category: "dishType", points: 8 },
             label: "혼밥+시간없어=분식",
         },
         // 회식 → 고기구이 보너스
         {
             conditions: { companion: "회식" },
-            bonus: { tag: "고기구이", category: "dishType", points: 12 },
+            bonus: { tag: "고기구이", category: "dishType", points: 10 },
             label: "회식=고기",
         },
         // 연인 → 양식 보너스
         {
             conditions: { companion: "연인" },
-            bonus: { tag: "양식", category: "cuisine", points: 8 },
+            bonus: { tag: "양식", category: "cuisine", points: 6 },
             label: "연인=양식",
         },
     ];
@@ -103,6 +102,23 @@ function scoreTagMatch(
 }
 
 /**
+ * 비율 기반 매칭 - 매칭 개수에 비례한 점수
+ */
+function scoreProportionalMatch(
+    selected: string[],
+    menuTags: string[],
+    pointsPerMatch: number,
+    ratioBonus: number,
+    noMatchPenalty: number
+): number {
+    if (selected.length === 0) return 0;
+    const matches = selected.filter((s) => menuTags.includes(s)).length;
+    if (matches === 0) return noMatchPenalty;
+    const ratio = matches / selected.length;
+    return matches * pointsPerMatch + Math.round(ratio * ratioBonus);
+}
+
+/**
  * 시너지 조건이 현재 selections에 매칭되는지 확인
  */
 function checkSynergyCondition(
@@ -113,7 +129,6 @@ function checkSynergyCondition(
         const sel = selections[key as keyof Selections];
         if (sel === null || sel === undefined) return false;
         if (Array.isArray(sel)) {
-            // taste같은 배열 필드
             if (Array.isArray(value)) {
                 return value.some((v) => sel.includes(v));
             }
@@ -124,20 +139,20 @@ function checkSynergyCondition(
 }
 
 /**
- * 8단계 선택을 기반으로 메뉴를 추천합니다.
+ * 9단계 선택을 기반으로 메뉴를 추천합니다.
  *
- * v2 알고리즘:
- * 1. 하드 필터: cuisine, dishType 불일치 항목 제거
- * 2. 다층 가중치 스코어링:
+ * v3 알고리즘:
+ * 1. 하드 필터: cuisine, dishType, cookingMethod 불일치 항목 제거
+ * 2. 다층 가중치 스코어링 (균형 재조정):
+ *    - 조리법(cookingMethod) 매칭 — 높은 가중치
  *    - 기본 태그 매칭 (시간, 동행, 맛, 온도, 예산)
- *    - 식감(texture) 매칭
+ *    - 식감(texture) 직접 매칭 (사용자 질문 반영)
  *    - 포만감(satiety) 적합도
  *    - 시간대별 요리 스타일 친화도
  *    - 시너지 보너스 (조합 효과)
  *    - 날씨 컨텍스트 연동
- *    - 다이어트 모드 칼로리 가중치
- * 3. 다양성 보장: alternatives는 다른 cuisine/dishType에서 선택
- * 4. 가중 랜덤 선택 (상위 점수 편향 + 적당한 변동성)
+ * 3. 다양성 보장: 후보 풀 확대 + 완화된 가중 랜덤
+ * 4. alternatives는 다른 cuisine/dishType에서 선택
  */
 export function recommendMenu(
     selections: Selections,
@@ -155,75 +170,97 @@ export function recommendMenu(
         const filtered = db.filter((m) => selections.dishType.some(d => m.tags.dishType.includes(d)));
         if (filtered.length >= 2) db = filtered;
     }
+    // cookingMethod 하드 필터 — 상관없음 태그가 있는 메뉴는 통과시키되, 스코어링에서 패널티 부여
     if (selections.cookingMethod.length > 0 && !selections.cookingMethod.includes("상관없음")) {
-        const filtered = db.filter((m) => selections.cookingMethod.some(cm => m.tags.cookingMethod.includes(cm)));
+        const filtered = db.filter((m) =>
+            m.tags.cookingMethod.includes("상관없음") ||
+            selections.cookingMethod.some(cm => m.tags.cookingMethod.includes(cm))
+        );
         if (filtered.length >= 2) db = filtered;
     }
 
-    // === Step 1: 다층 스코어링 ===
+    // === Step 1: 다층 스코어링 (v3 균형 재조정) ===
     const scored: ScoredMenu[] = db.map((menu) => {
         let score = 0;
         const breakdown: Record<string, number> = {};
 
-        // --- 1a. 시간대 매칭 (핵심, 높은 가중치) ---
+        // --- 1a. 시간대 매칭 (핵심) ---
         if (selections.mealTime.length > 0) {
             if (selections.mealTime.some(t => menu.tags.mealTime.includes(t))) {
-                score += 30;
-                breakdown["mealTime"] = 30;
+                score += 25;
+                breakdown["mealTime"] = 25;
             } else {
-                score -= 80; // 시간대 불일치는 치명적
-                breakdown["mealTime"] = -80;
+                score -= 100; // 시간대 불일치는 치명적
+                breakdown["mealTime"] = -100;
             }
         }
 
         // --- 1b. 동행 인원 매칭 ---
         if (selections.companion.length > 0) {
-            const s = scoreTagMatch(selections.companion, menu.tags.companion, 20, -15);
+            const s = scoreTagMatch(selections.companion, menu.tags.companion, 15, -10);
             score += s;
             breakdown["companion"] = s;
         }
 
-        // --- 1c. 맛 선호 매칭 (복수 선택, 비율 기반) ---
+        // --- 1c. 조리법(cookingMethod) 매칭 — v3 핵심 추가 ---
+        if (selections.cookingMethod.length > 0 && !selections.cookingMethod.includes("상관없음")) {
+            if (menu.tags.cookingMethod.includes("상관없음")) {
+                // 메뉴가 '상관없음'으로 설정된 경우 — 약한 패널티 (정확한 태그 메뉴 우선)
+                score -= 8;
+                breakdown["cookingMethod"] = -8;
+            } else if (selections.cookingMethod.some(cm => menu.tags.cookingMethod.includes(cm))) {
+                // 정확히 매칭
+                score += 30;
+                breakdown["cookingMethod"] = 30;
+            } else {
+                // 불일치
+                score -= 25;
+                breakdown["cookingMethod"] = -25;
+            }
+        }
+
+        // --- 1d. 맛 선호 매칭 (비율 기반, 가중치 하향) ---
         if (selections.taste.length > 0) {
-            const tasteMatches = selections.taste.filter((t) =>
-                menu.tags.taste.includes(t)
-            ).length;
-            const matchRatio = tasteMatches / selections.taste.length;
-            // 일치 비율이 높을수록 보너스, 0이면 패널티
-            const tasteScore = tasteMatches > 0
-                ? tasteMatches * 20 + Math.round(matchRatio * 15)
-                : -30;
+            const tasteScore = scoreProportionalMatch(
+                selections.taste, menu.tags.taste, 12, 8, -15
+            );
             score += tasteScore;
             breakdown["taste"] = tasteScore;
         }
 
-        // --- 1d. 온도 선호 매칭 ---
+        // --- 1e. 온도 선호 매칭 ---
         if (selections.temperature.length > 0 && !selections.temperature.includes("상온")) {
-            const s = scoreTagMatch(selections.temperature, menu.tags.temperature, 15, -20);
+            const s = scoreTagMatch(selections.temperature, menu.tags.temperature, 20, -25);
             score += s;
             breakdown["temperature"] = s;
         }
 
-        // --- 1e. 가격대 매칭 ---
+        // --- 1f. 가격대 매칭 ---
         if (selections.budget.length > 0 && !selections.budget.includes("상관없음")) {
-            const s = scoreTagMatch(selections.budget, menu.tags.budget, 15, -10);
+            const s = scoreTagMatch(selections.budget, menu.tags.budget, 10, -8);
             score += s;
             breakdown["budget"] = s;
         }
 
-        // --- 1f. 특수 상황 매칭 (보너스 Only, 패널티 없음) ---
+        // --- 1g. 특수 상황 매칭 (보너스 Only, 패널티 없음) ---
         if (selections.context.length > 0 && !selections.context.includes("패스")) {
-            const s = scoreTagMatch(selections.context, menu.tags.context, 25);
-            if (s > 0) {
-                score += s;
-                breakdown["context"] = s;
+            const contextMatches = selections.context.filter(c => menu.tags.context.includes(c)).length;
+            if (contextMatches > 0) {
+                const contextScore = contextMatches * 15;
+                score += contextScore;
+                breakdown["context"] = contextScore;
             }
         }
 
-        // --- 1g. 식감(texture) 매칭 (새로 추가) ---
-        // taste와 함께 음식의 감각적 경험을 반영
-        if (selections.taste.length > 0) {
-            // 맛 선호에 따라 선호할 만한 식감 추정
+        // --- 1h. 식감(texture) 직접 매칭 (v3: 사용자 질문에서 직접 받음) ---
+        if (selections.texture && selections.texture.length > 0 && !selections.texture.includes("상관없음")) {
+            const texScore = scoreProportionalMatch(
+                selections.texture, menu.tags.texture, 10, 5, -10
+            );
+            score += texScore;
+            breakdown["texture_direct"] = texScore;
+        } else if (selections.taste.length > 0) {
+            // texture 미선택 시 taste 기반 추론 (이전 로직, 가중치 낮게)
             const textureAffinities: Record<string, string[]> = {
                 "매콤": ["쫄깃", "탱글"],
                 "고소": ["바삭", "부드러움", "꾸덕"],
@@ -239,13 +276,13 @@ export function recommendMenu(
                 const textureMatches = menu.tags.texture.filter((t) =>
                     preferredTextures.has(t)
                 ).length;
-                const texScore = textureMatches * 5;
+                const texScore = textureMatches * 3;
                 score += texScore;
-                breakdown["texture"] = texScore;
+                breakdown["texture_inferred"] = texScore;
             }
         }
 
-        // --- 1h. 포만감 적합도 (시간대 기반) ---
+        // --- 1i. 포만감 적합도 (시간대 기반) ---
         if (selections.mealTime.length > 0) {
             const mTime = selections.mealTime[0];
             if (SATIETY_PREFERENCE[mTime]) {
@@ -254,7 +291,6 @@ export function recommendMenu(
                     score += 8;
                     breakdown["satiety"] = 8;
                 } else if (
-                    // 야식에 배터짐, 아침에 배터짐은 살짝 패널티
                     (mTime === "야식" && menu.tags.satiety === "배터짐") ||
                     (mTime === "아침" && menu.tags.satiety === "배터짐") ||
                     (mTime === "간식" && (menu.tags.satiety === "든든함" || menu.tags.satiety === "배터짐"))
@@ -265,7 +301,7 @@ export function recommendMenu(
             }
         }
 
-        // --- 1i. 시간대별 요리 스타일 친화도 ---
+        // --- 1j. 시간대별 요리 스타일 친화도 ---
         if (selections.mealTime.length > 0) {
             for (const mTime of selections.mealTime) {
                 if (MEALTIME_DISHTYPE_AFFINITY[mTime]) {
@@ -280,20 +316,18 @@ export function recommendMenu(
             }
         }
 
-        // --- 1j. 시너지 보너스 ---
+        // --- 1k. 시너지 보너스 ---
         for (const rule of SYNERGY_RULES) {
             if (checkSynergyCondition(rule.conditions, selections)) {
-                // 다이어트 시너지는 특수 처리: 칼로리 체크
                 if (rule.label === "다이어트=저칼") {
                     if (menu.calories === "저칼로리") {
                         score += rule.bonus.points;
                         breakdown[`synergy:${rule.label}`] = rule.bonus.points;
                     } else if (menu.calories === "고칼로리") {
-                        score -= 15;
-                        breakdown[`synergy:anti-diet`] = -15;
+                        score -= 12;
+                        breakdown[`synergy:anti-diet`] = -12;
                     }
                 } else {
-                    // 일반 시너지: 해당 카테고리의 태그가 일치하면 보너스
                     const menuTags = menu.tags[rule.bonus.category as keyof MenuItem["tags"]];
                     if (Array.isArray(menuTags) && menuTags.includes(rule.bonus.tag)) {
                         score += rule.bonus.points;
@@ -303,7 +337,7 @@ export function recommendMenu(
             }
         }
 
-        // --- 1k. 날씨 온도 연동 (전달받은 실제 기온) ---
+        // --- 1l. 날씨 온도 연동 ---
         if (weatherTemp !== undefined && weatherTemp !== null) {
             if (weatherTemp >= 28 && menu.tags.temperature.includes("차가운")) {
                 score += 8;
@@ -320,17 +354,19 @@ export function recommendMenu(
     // === Step 2: 점수 기준 정렬 ===
     scored.sort((a, b) => b.score - a.score);
 
-    // === Step 3: 후보 선정 + 다양성 보장 ===
+    // === Step 3: 후보 선정 + 다양성 보장 (v3: 풀 확대) ===
     const positives = scored.filter((s) => s.score > 0);
-    const candidates = positives.length >= 3
-        ? positives.slice(0, 10)
-        : scored.slice(0, 8); // fallback
+    const candidates = positives.length >= 5
+        ? positives.slice(0, 15) // 후보 풀 15개로 확대
+        : positives.length >= 3
+            ? positives.slice(0, 10)
+            : scored.slice(0, 8); // fallback
 
     if (candidates.length === 0) {
         return { recommended: null, alternatives: [] };
     }
 
-    // 가중 랜덤 선택 (상위 편향 + 적당한 변동성)
+    // 가중 랜덤 선택 (v3: 편향 완화로 다양성 강화)
     const recommended = weightedRandomPick(candidates);
 
     // === Step 4: 다양성 있는 alternatives 선택 ===
@@ -347,19 +383,19 @@ export function recommendMenu(
 }
 
 /**
- * 가중 랜덤 선택 — 점수가 높을수록 뽑힐 확률이 높지만 변동성 존재
+ * 가중 랜덤 선택 — v3: 편향 완화 (지수 1.3, 최소 가중치 0.1)
  */
 function weightedRandomPick(candidates: ScoredMenu[]): MenuItem {
-    if (candidates.length === 0) return menuDatabase[0]; // fallback
+    if (candidates.length === 0) return menuDatabase[0];
     if (candidates.length === 1) return candidates[0].menu;
 
     const topScore = candidates[0].score;
     const minScore = Math.max(candidates[candidates.length - 1].score, 1);
 
-    // 점수를 0~1로 정규화 후 제곱으로 상위 편향
+    // 점수를 0~1로 정규화 후 지수 1.3으로 완화된 상위 편향
     const weights = candidates.map((c) => {
         const normalized = (c.score - minScore + 1) / (topScore - minScore + 1);
-        return Math.pow(normalized, 1.8) + 0.05; // 0.05 최소 가중치로 변동성 보장
+        return Math.pow(normalized, 1.3) + 0.1; // 0.1 최소 가중치로 더 넓은 변동성
     });
 
     const totalWeight = weights.reduce((sum, w) => sum + w, 0);
@@ -434,7 +470,7 @@ export function getWeatherContext(
 }
 
 /**
- * 추천 이유 문구 생성 (v2: 더 다양한 이유 조합)
+ * 추천 이유 문구 생성 (v3: 더 다양한 이유 조합)
  */
 export function getRecommendReason(
     menu: MenuItem,
@@ -463,18 +499,33 @@ export function getRecommendReason(
         }
     }
 
-    // 2. 맛 매칭
+    // 2. 조리법 매칭
+    if (selections.cookingMethod.length > 0 && !selections.cookingMethod.includes("상관없음")) {
+        const matchedCM = selections.cookingMethod.find((cm) => menu.tags.cookingMethod.includes(cm));
+        if (matchedCM) {
+            const cmMap: Record<string, string> = {
+                "국물": "따끈한 국물이 속을 달래줄 거예요.",
+                "구이볶음": "불맛 가득한 요리로 입맛을 사로잡아요!",
+                "튀김": "바삭한 튀김이 기분까지 바삭하게!",
+                "찜삶음": "부드럽고 촉촉한 맛이 일품이에요.",
+                "날것": "신선한 재료 본연의 맛을 즐겨보세요!",
+            };
+            if (cmMap[matchedCM] && reasons.length < 2) reasons.push(cmMap[matchedCM]);
+        }
+    }
+
+    // 3. 맛 매칭
     if (selections.taste.length > 0) {
         const matched = selections.taste.filter((t) => menu.tags.taste.includes(t));
-        if (matched.length > 0) {
+        if (matched.length > 0 && reasons.length < 2) {
             reasons.push(`${matched.join(" + ")} 맛을 좋아하신다면 강력 추천!`);
         }
     }
 
-    // 3. 동행 매칭
+    // 4. 동행 매칭
     if (selections.companion.length > 0) {
         const matchedComp = selections.companion.find((c) => menu.tags.companion.includes(c));
-        if (matchedComp) {
+        if (matchedComp && reasons.length < 2) {
             const compMap: Record<string, string> = {
                 "혼밥": "혼자서도 편하게 즐기기 좋아요.",
                 "연인": "데이트 메뉴로 분위기 있는 선택!",
@@ -488,17 +539,19 @@ export function getRecommendReason(
         }
     }
 
-    // 4. 식감 하이라이트
-    if (menu.tags.texture.length > 0) {
+    // 5. 식감 하이라이트
+    if (menu.tags.texture.length > 0 && reasons.length < 2) {
         const textureDesc: Record<string, string> = {
             "바삭": "바삭한 식감이 매력적이에요!",
             "쫄깃": "쫄깃한 식감이 일품이에요!",
             "부드러움": "부드럽게 넘어가는 맛이 좋아요.",
             "아삭": "아삭한 채소가 식감을 더해요!",
             "꾸덕": "꾸덕한 식감이 중독적이에요!",
+            "탱글": "탱글탱글한 식감이 매력 포인트!",
+            "촉촉": "촉촉하고 풍미 가득한 맛이에요.",
         };
         const texMatch = menu.tags.texture.find((t) => textureDesc[t]);
-        if (texMatch && reasons.length < 2) {
+        if (texMatch) {
             reasons.push(textureDesc[texMatch]);
         }
     }
@@ -516,12 +569,11 @@ export function getRecommendReason(
 export function getWeatherRecommendation(temp: number | null, condition: string | null): string {
     if (!condition) return "오늘 같은 날씨엔 맛있는 한 끼로 기분 전환! 🍽️";
 
-    const t = temp ?? 20; // default temp
+    const t = temp ?? 20;
     const c = condition.toLowerCase();
 
     const getRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
-    // 1. 눈/비 (최우선)
     if (c.includes("rain") || c.includes("drizzle") || c.includes("thunderstorm")) {
         return getRandom([
             "비 오는 날엔 따끈한 국물이나 바삭한 파전 어때요? ☔️",
@@ -540,7 +592,6 @@ export function getWeatherRecommendation(temp: number | null, condition: string 
         ]);
     }
 
-    // 2. 기온별 추천
     if (t >= 30) {
         return getRandom([
             "폭염 주의! 살얼음 동동 띄운 시원한 냉면! 🧊",
@@ -571,7 +622,6 @@ export function getWeatherRecommendation(temp: number | null, condition: string 
         ]);
     }
 
-    // 3. 날씨 상태별 추천 (기온이 적당할 때)
     if (c.includes("cloud") || c.includes("overcast")) {
         return getRandom([
             "구름 낀 흐린 날엔 매콤한 떡볶이나 짬뽕으로 기분 전환! 🌶️",
@@ -594,7 +644,6 @@ export function getWeatherRecommendation(temp: number | null, condition: string 
         ]);
     }
 
-    // 4. 기본 (적당한 날씨)
     return getRandom([
         "선선한 날씨엔 든든한 덮밥이나 가정식 백반 어때요? 🍚",
         "오늘 같은 날씨엔 치킨에 맥주가 딱! 🍗",
