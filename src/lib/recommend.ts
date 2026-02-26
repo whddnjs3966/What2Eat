@@ -226,20 +226,42 @@ export function recommendMenu(
             );
             score += tasteScore;
             breakdown["taste"] = tasteScore;
+
+            // [초고강도 필터] 담백함을 원하고 매운맛을 원하지 않는데 매운 음식(spicyLevel >= 2)이 나온 경우
+            const wantsMild = selections.taste.includes("담백");
+            const wantsSpicy = selections.taste.includes("매콤") || selections.taste.includes("얼얼");
+            if (wantsMild && !wantsSpicy && menu.spicyLevel >= 2) {
+                score -= 100;
+                breakdown["taste_spice_mismatch"] = -100;
+            }
         }
 
         // --- 1e. 온도 선호 매칭 ---
         if (selections.temperature.length > 0 && !selections.temperature.includes("상온")) {
-            const s = scoreTagMatch(selections.temperature, menu.tags.temperature, 20, -25);
-            score += s;
-            breakdown["temperature"] = s;
+            const hasMatch = selections.temperature.some(t => menu.tags.temperature.includes(t)) || menu.tags.temperature.includes("상온");
+            if (hasMatch) {
+                const s = scoreTagMatch(selections.temperature, menu.tags.temperature, 20, 0);
+                score += s;
+                breakdown["temperature"] = s;
+            } else {
+                // [초고강도 필터] 차가운 것을 원하는데 뜨거운 것만 있는 등 완전 불일치 시
+                score -= 100;
+                breakdown["temperature_mismatch"] = -100;
+            }
         }
 
         // --- 1f. 가격대 매칭 ---
         if (selections.budget.length > 0 && !selections.budget.includes("상관없음")) {
-            const s = scoreTagMatch(selections.budget, menu.tags.budget, 10, -8);
-            score += s;
-            breakdown["budget"] = s;
+            const hasMatch = selections.budget.some(b => menu.tags.budget.includes(b));
+            if (hasMatch) {
+                const s = scoreTagMatch(selections.budget, menu.tags.budget, 10, 0);
+                score += s;
+                breakdown["budget"] = s;
+            } else {
+                // [초고강도 필터] 예산(가성비)을 선택했는데 교집합이 전혀 없는 경우 (플렉스만 있는 등)
+                score -= 100;
+                breakdown["budget_mismatch"] = -100;
+            }
         }
 
         // --- 1g. 특수 상황 매칭 (보너스 Only, 패널티 없음) ---
@@ -324,8 +346,9 @@ export function recommendMenu(
                         score += rule.bonus.points;
                         breakdown[`synergy:${rule.label}`] = rule.bonus.points;
                     } else if (menu.calories === "고칼로리") {
-                        score -= 12;
-                        breakdown[`synergy:anti-diet`] = -12;
+                        // [초고강도 필터] 다이어트 중인데 고칼로리 음식인 경우
+                        score -= 100;
+                        breakdown[`synergy:anti-diet_mismatch`] = -100;
                     }
                 } else {
                     const menuTags = menu.tags[rule.bonus.category as keyof MenuItem["tags"]];
